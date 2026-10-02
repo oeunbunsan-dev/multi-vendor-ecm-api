@@ -29,12 +29,18 @@ export const authPlugin = new Elysia({ name: "auth-plugin" })
     })
   )
   .derive({ as: "scoped" }, async ({ headers, jwtAccess }) => {
-    const authHeader = headers["authorization"];
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Check standard Authorization header as well as proxy fallbacks (X-Access-Token, X-Auth-Token)
+    const rawAuth =
+      headers["authorization"] ||
+      headers["x-access-token"] ||
+      headers["x-auth-token"] ||
+      headers["x-bearer-token"];
+
+    if (!rawAuth) {
       return { user: null as AuthUser | null };
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = rawAuth.startsWith("Bearer ") ? rawAuth.slice(7).trim() : rawAuth.trim();
     if (!token) {
       return { user: null as AuthUser | null };
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { app } from "@/app";
 
-describe("Integration Tests: Products API", () => {
+describe("Integration Tests: Products & Uploads API", () => {
   it("GET /api/products - should return seeded products list with pagination metadata", async () => {
     const res = await app.handle(new Request("http://localhost/api/products?page=1&limit=5"));
     expect(res.status).toBe(200);
@@ -42,5 +42,23 @@ describe("Integration Tests: Products API", () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.some((p: any) => p.name.includes("Sony"))).toBe(true);
+  });
+
+  it("POST /api/uploads - should accept file uploads successfully", async () => {
+    const formData = new FormData();
+    const fakeFile = new File(["dummy content"], "test-image.png", { type: "image/png" });
+    formData.append("file", fakeFile);
+
+    const res = await app.handle(
+      new Request("http://localhost/api/uploads", {
+        method: "POST",
+        body: formData,
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data.url.startsWith("/uploads/")).toBe(true);
   });
 });
