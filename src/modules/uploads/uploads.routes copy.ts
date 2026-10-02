@@ -5,9 +5,11 @@ import { successResponse } from "@/common/utils/response";
 import { UnauthorizedException } from "@/common/exceptions";
 
 export const uploadsRoutes = new Elysia({ prefix: "/uploads" })
+  .use(authPlugin)
   .post(
     "/",
-    async ({ body }) => {
+    async ({ user, body }) => {
+      // if (!user) throw new UnauthorizedException("Authentication required");
       const result = await uploadsService.saveFile(body.file as File);
       return successResponse(result, "File uploaded successfully");
     },
