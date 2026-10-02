@@ -1,0 +1,48 @@
+export const ROLES = {
+  ADMIN: "ADMIN",
+  VENDOR: "VENDOR",
+  CUSTOMER: "CUSTOMER",
+} as const;
+
+export type UserRole = (typeof ROLES)[keyof typeof ROLES];
+
+export const VENDOR_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  SUSPENDED: "SUSPENDED",
+} as const;
+
+export const ORDER_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  PROCESSING: "PROCESSING",
+  SHIPPED: "SHIPPED",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+  REFUNDED: "REFUNDED",
+} as const;
+
+export const PAYMENT_STATUS = {
+  PENDING: "PENDING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+} as const;
+
+export const PAYMENT_METHODS = {
+  COD: "COD",
+  ABA_PAYWAY: "ABA_PAYWAY",
+  STRIPE: "STRIPE",
+  PAYPAL: "PAYPAL",
+} as const;
+
+export const SHIPMENT_STATUS = {
+  PENDING: "PENDING",
+  PICKED_UP: "PICKED_UP",
+  IN_TRANSIT: "IN_TRANSIT",
+  OUT_FOR_DELIVERY: "OUT_FOR_DELIVERY",
+  DELIVERED: "DELIVERED",
+  FAILED: "FAILED",
+  RETURNED: "RETURNED",
+} as const;

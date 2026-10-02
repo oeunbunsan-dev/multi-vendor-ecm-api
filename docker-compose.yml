@@ -1,0 +1,113 @@
+services:
+  # ----------------------------------------------------
+  # 1. API Application (Elysia + Bun)
+  # ----------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: emc_ecommerce_api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - API_PREFIX=/api
+      - APP_NAME="EMC Multi-Vendor E-Commerce API"
+      - APP_URL=http://localhost:${PORT:-3001}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-emc_ecommerce}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-production-grade-super-secret-jwt-key-emc}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-production-grade-super-secret-refresh-key-emc}
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - DEFAULT_ADMIN_EMAIL=admin@emc.com
+      - DEFAULT_ADMIN_PASSWORD=AdminPassword123!
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - emc_network
+
+  # ----------------------------------------------------
+  # 2. PostgreSQL 16
+  # ----------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: emc_ecommerce_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-emc_ecommerce}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-emc_ecommerce}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - emc_network
+
+  # ----------------------------------------------------
+  # 3. Redis 7
+  # ----------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: emc_ecommerce_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - emc_network
+
+  # ----------------------------------------------------
+  # 4. pgAdmin 4
+  # ----------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: emc_ecommerce_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@emc.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-AdminPassword123!}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - emc_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  emc_network:
+    driver: bridge
